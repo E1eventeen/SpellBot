@@ -149,6 +149,7 @@ class Board:
 
     def searchAll(self, customs = 0):
         s = SearchHelper()
+        s.clear()
         for x in range(self.lenX):
             for y in range(self.lenY):
                 print("Calculating letter (" + str(x) + ", " + str(y) + ").")
@@ -156,6 +157,7 @@ class Board:
         return s
 
     def search(self, origin, s = SearchHelper(), customs = 0):
+        #s.clear()
         self.recursiveSearch([origin], s, customs = customs)
         return s
 
