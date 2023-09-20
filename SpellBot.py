@@ -1,11 +1,13 @@
 import random
 from datetime import datetime
 import time
+import math
 random.seed(datetime.now().timestamp())
 
 LENGTH_LIMIT = 10
 
 class Dictionary:
+    trace = []
     calculations = 0
     fileName = ""
     words = []
@@ -27,6 +29,27 @@ class Dictionary:
     def isWord(self, s):
         return s in self.words
 
+    def arrayToStr(self, word):
+        output = ""
+        for letter in word:
+            output += letter.char
+        return output
+
+    def outputTrace(self, board, file):
+        f = open(file, "w")
+        for letter in board.letters:
+            f.write(letter.char)
+        f.write("\n")
+        for trial in self.trace:
+            string = ""
+            for letter in trial:
+                string += letter.char
+            isWord = self.isWord(string)
+            for letter in trial:
+                f.write("[" + str(letter.x) + ":" + str(letter.y) + ":" + letter.char + ":" + str(int(letter.custom)) + ":" + str(int(isWord)) + "],")
+            f.write("\n")
+        f.close()
+
 class Letter:
     letterValues = {'a':1, 'b':4, 'c':5, 'd':3, 'e':1, \
                     'f':5, 'g':3, 'h':4, 'i':1, 'j':7, \
@@ -39,9 +62,9 @@ class Letter:
     mana = False
     points = 0
     board = None
+    custom = False
     
-    
-    def __init__(self, char, x, y, board, mana = False, multiplier = 1, double = False):
+    def __init__(self, char, x, y, board, mana = False, multiplier = 1, double = False, custom = False):
         self.char = char.lower()
         self.x = x
         self.y = y
@@ -50,6 +73,7 @@ class Letter:
         self.double = double
         self.multiplier = multiplier
         self.mana = mana
+        self.custom = custom
         
 
     def __str__(self):
@@ -79,6 +103,12 @@ class SearchHelper():
         for word in self.words:
             output.append([board.wordValue(word), board.listToString(word)])
         return output
+
+    def getBestWord(self, board):
+        scores = []
+        for word in self.words:
+            scores.append([word, board.wordValue(word)])
+        return sorted(scores, key = lambda x: x[1])[-1]
 
     def clear(self):
         self.words.clear()
@@ -152,7 +182,10 @@ class Board:
         s.clear()
         for x in range(self.lenX):
             for y in range(self.lenY):
-                print("Calculating letter (" + str(x) + ", " + str(y) + ").")
+                #print("Calculating letter (" + str(x) + ", " + str(y) + ").")
+                printLoadBar(x * 5 + y, self.lenX * self.lenY)
+                i = x * 5 + y
+                
                 self.search(self.getLetter(x, y), s, customs = customs)
         return s
 
@@ -169,20 +202,30 @@ class Board:
         for letter in usedLetters[-1].getSurrounding():
             valid = True
             if letter.x >= self.lenX or letter.x < 0: #If x out of bound
-                valid = False
+                continue
             if letter.y >= self.lenY or letter.y < 0: #If y out of bound
-                valid = False
+                continue
             if letter in usedLetters:
-                valid = False
+                continue
+            if letter.char == "-": ## RUN TEST IN ALL SEARCHES
+                continue
+            for used in usedLetters:
+                #print (used.char + str(used.x) + str(used.y) + ", " + letter.char + str(letter.x) + str(letter.y))
+                if used.x == letter.x and used.y == letter.y:
+                    valid = False
+                    continue
 
             if valid:
                 for i in range(26):
-                    customLetter = Letter(chr(i + 97), letter.x, letter.y, letter.board, mana = letter.mana, multiplier = letter.multiplier, double = letter.double)
+                    customLetter = Letter(chr(i + 97), letter.x, letter.y, letter.board, mana = letter.mana, multiplier = letter.multiplier, double = letter.double, custom = True)
                     string = self.listToString(usedLetters + [customLetter])
                     #print(string)
 
-                    if len(d.findWords(string)) > 0:
-                        if (d.isWord(string)):
+                    #TRACER
+                    self.d.trace.append(usedLetters + [customLetter])
+
+                    if len(self.d.findWords(string)) > 0:
+                        if (self.d.isWord(string)):
                             #print("WORD FOUND:" + string)
                             helper.add(usedLetters + [customLetter])
                         self.recursiveSearch(usedLetters + [customLetter], helper, customs - 1)
@@ -198,16 +241,26 @@ class Board:
         for letter in usedLetters[-1].getSurrounding():
             valid = True
             if letter.x >= self.lenX or letter.x < 0: #If x out of bound
-                valid = False
+                continue
             if letter.y >= self.lenY or letter.y < 0: #If x out of bound
-                valid = False
+                continue
 
             if letter in usedLetters:
-                valid = False
+                continue
+
+            for used in usedLetters:
+                #print (used.char + str(used.x) + str(used.y) + ", " + letter.char + str(letter.x) + str(letter.y))
+                if used.x == letter.x and used.y == letter.y:
+                    valid = False
+                    continue
 
             if valid:
                 string = self.listToString(usedLetters + [letter])
                 #print(string)
+
+                #TRACER
+                self.d.trace.append(usedLetters + [letter])
+                
                 if len(self.d.findWords(string)) > 0: #If new word is possible, continue
 
                     if (self.d.isWord(string)): #If word is in wordlist output
@@ -216,6 +269,23 @@ class Board:
                     
                     self.recursiveSearch(usedLetters + [letter], helper, customs)
 
+def printLoadBar(x, y):
+    print(str(math.floor(x / y * 100.0)) + "% \t- <|", end = "")
+    for i in range(x):
+        print("⬛", end = "")
+    for i in range(y - x):
+        print("⬜", end = "")
+    print("|>")
+
+
+def main2():
+    d = Dictionary("2of12inf.txt")
+    b = Board(5,5, d)
+    #b.buildFromString("devilladaemonusspellbound")
+    b.buildFromString("axe----------------------")
+    h = b.search(b.getLetter(0,0), customs = 0)
+    d.outputTrace(b, "trace.txt")
+    
 def main():
     d = Dictionary("2of12inf.txt")
 
@@ -247,3 +317,4 @@ def main():
     print(words[-1])
     end_time = time.time()
     print(end_time - start_time)
+

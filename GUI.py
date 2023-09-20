@@ -14,8 +14,8 @@ def clear(letters, outputLabel):
         textBox.delete(0, "end")
     outputLabel.config(text = "")
 
-def calculate(letters, v, outputLabel):
-    print(v.get())
+def calculate(letters, v, outputLabel, customsScale):
+    print(customsScale.get())
     
     string = ""
     for textBox in letters:
@@ -35,12 +35,13 @@ def calculate(letters, v, outputLabel):
 
     b.getLetter(v.get() // 5, v.get() % 5).double=True
     
-    h = b.searchAll()
+    h = b.searchAll(customs = customsScale.get())
     words = sorted(h.getWords(b), key = lambda x: x[0])
     outputLabel.config(text = words[-1][1] + " - " + str(words[-1][0]))
     print(words[-1])
     end_time = time.time()
     print(end_time - start_time)
+    d.outputTrace(b, "trace.txt")
 
 def validate_input(new_value):
     return len(new_value) <= 1
@@ -73,6 +74,10 @@ noneLabel.grid(row = 2, column = 1)
 outputLabel = Label(letterFrameSuper, text = '')
 outputLabel.grid(row = 5, column = 0)
 
+customsScale = Scale(superFrame,from_=0,to=2,orient="vertical")
+customsScale.grid(row = 1, column = 3, sticky = N)
+scaleLabel = Label(superFrame, text = "Custom Letters")
+scaleLabel.grid(row = 0, column = 3)
 
 letterInputs = [] #Create Entry Boxes
 for i in range(25): 
@@ -91,7 +96,7 @@ for i in range(25):
 radioButtons.append(Radiobutton(radioFrame, variable = v, value = -1))
 radioButtons[25].grid(row = 5, column = 2, sticky="nsew")
 
-b_Calculate = Button(buttonFrame, text = "Calculate", command= lambda: calculate(letterInputs, v, outputLabel))
+b_Calculate = Button(buttonFrame, text = "Calculate", command= lambda: calculate(letterInputs, v, outputLabel, customsScale))
 b_Calculate.grid(row = 0, column = 0)
 
 b_Calculate = Button(buttonFrame, text = "Clear", command= lambda: clear(letterInputs, outputLabel))
