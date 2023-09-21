@@ -228,8 +228,8 @@ class Board:
         i = 0
         for word in self.d.words:
             i += 1
-            if i % 9098 == 0:
-                printLoadBar(i // 9098, 9)
+            if i % 818 == 0:
+                print(i / 81833 * 100.0)
             
             n = self.wordInBoardCust(word, customs = customLetters)
             if n:
@@ -268,7 +268,7 @@ print(words[-1])
 
 end_time = time.time()
 print(end_time - start_time)
-"""
+
     #h = b.search(b.getLetter(0,0), customs = 2)
     #words = sorted(h.getWords(b), key=lambda x: x[0])
     #print(words)
@@ -288,5 +288,5 @@ print(end_time - start_time)
     #words = sorted(h.getWords(b), key=lambda x: x[0])
     #print(words[-1])
     #end_time = time.time()
-    #print(end_time - start_time)
+    #print(end_time - start_time)"""
 
